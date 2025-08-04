@@ -1,39 +1,27 @@
-name: Langfuse Prompt CI
+name: Langfuse Prompt Sync
 
 on:
   repository_dispatch:
     types: [langfuse-prompt-update]
-  workflow_dispatch:
 
 jobs:
-  test:
+  save_prompt:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      # Log thông tin prompt từ webhook Langfuse
-      - name: Process prompt data
+      - name: Save or update prompt file
         run: |
-          echo "Action: ${{ github.event.client_payload.action }}"
-          echo "Prompt: ${{ github.event.client_payload.prompt.name }}"
-          echo "Version: ${{ github.event.client_payload.prompt.version }}"
-          echo "Labels: ${{ github.event.client_payload.prompt.labels }}"
+          mkdir -p prompts
+          FILE="prompts/${{ github.event.client_payload.prompt.name }}.txt"
+          echo "Updating prompt file: $FILE"
+          echo "${{ github.event.client_payload.prompt.content }}" > "$FILE"
 
-      # Chạy test (nếu có)
-      - name: Run tests
+      - name: Commit and push changes
         run: |
-          echo "Testing prompt: ${{ github.event.client_payload.prompt.name }} v${{ github.event.client_payload.prompt.version }}"
-          # npm test
-          # python -m pytest
-
-  deploy:
-    needs: test
-    runs-on: ubuntu-latest
-    if: contains(github.event.client_payload.prompt.labels, 'production')
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Deploy to production
-        run: |
-          echo "Deploying ${{ github.event.client_payload.prompt.name }} v${{ github.event.client_payload.prompt.version }}"
-          # Thêm lệnh deploy thật của bạn ở đây
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add prompts/
+          git commit -m "Update prompt ${{ github.event.client_payload.prompt.name }} v${{ github.event.client_payload.prompt.version }}" || echo "No changes to commit"
+          git push
