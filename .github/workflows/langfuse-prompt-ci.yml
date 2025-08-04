@@ -4,6 +4,9 @@ on:
   repository_dispatch:
     types: [langfuse-prompt-update]
 
+permissions:
+  contents: write
+  
 jobs:
   save_prompt:
     runs-on: ubuntu-latest
