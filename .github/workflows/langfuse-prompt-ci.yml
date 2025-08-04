@@ -6,7 +6,7 @@ on:
 
 permissions:
   contents: write
-  
+
 jobs:
   save_prompt:
     runs-on: ubuntu-latest
@@ -14,12 +14,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Save or update prompt file
+      - name: Save or update prompt YAML
         run: |
           mkdir -p prompts
-          FILE="prompts/${{ github.event.client_payload.prompt.name }}.txt"
-          echo "Updating prompt file: $FILE"
-          echo "${{ github.event.client_payload.prompt.content }}" > "$FILE"
+          FILE="prompts/${{ github.event.client_payload.prompt.name }}.yaml"
+          echo "name: ${{ github.event.client_payload.prompt.name }}" > "$FILE"
+          echo "version: ${{ github.event.client_payload.prompt.version }}" >> "$FILE"
+          echo "content: |" >> "$FILE"
+          echo "${{ github.event.client_payload.prompt.content }}" | sed 's/^/  /' >> "$FILE"
 
       - name: Commit and push changes
         run: |
