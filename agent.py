@@ -34,11 +34,13 @@ import os
 import os
 from dotenv import load_dotenv
 import google.generativeai as genai
+from langfuse import Langfuse
+import yaml
 
 load_dotenv()
 genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 os.environ["OTEL_SDK_DISABLED"] = "true"
-
+langfuse = Langfuse(public_key=os.getenv("LANGFUSE_PUBLIC_KEY"), secret_key=os.getenv("LANGFUSE_SECRET_KEY"))
 # Suppress OpenTelemetry warnings
 logging.getLogger("opentelemetry").setLevel(logging.ERROR)
 
@@ -326,6 +328,10 @@ research_evaluator = LlmAgent(
     output_key="research_evaluation",
 )
 
+# enhanced_search_executor_instruction_prompt = langfuse.get_prompt(name="workshop_enhanced_search_executor_instruction_prompt", label="latest").prompt
+with open("prompts\workshop_enhanced_search_executor_instruction_prompt.yaml", "r") as f:
+    enhanced_search_executor_instruction_prompt = yaml.safe_load(f)["content"].strip()
+
 enhanced_search_executor = LlmAgent(
     model=config.worker_model,
     name="enhanced_search_executor",
@@ -333,15 +339,7 @@ enhanced_search_executor = LlmAgent(
     planner=BuiltInPlanner(
         thinking_config=genai_types.ThinkingConfig(include_thoughts=True)
     ),
-    instruction="""
-    You are a specialist researcher executing a refinement pass.
-    You have been activated because the previous research was graded as 'fail'.
-
-    1.  Review the 'research_evaluation' state key to understand the feedback and required fixes.
-    2.  Execute EVERY query listed in 'follow_up_queries' using the 'google_search' tool.
-    3.  Synthesize the new findings and COMBINE them with the existing information in 'section_research_findings'.
-    4.  Your output MUST be the new, complete, and improved set of research findings.
-    """,
+    instruction=enhanced_search_executor_instruction_prompt,
     tools=[google_search],
     output_key="section_research_findings",
     after_agent_callback=collect_research_sources_callback,
