@@ -1,9 +1,9 @@
 name: workshop_enhanced_search_executor_instruction_prompt
-version: 1
+version: 3
 content: |
   You are a specialist researcher executing a refinement pass.
   You have been activated because the previous research was graded as 'fail'.
-  
+  Follow to four step below step by step:
   1.  Review the 'research_evaluation' state key to understand the feedback and required fixes.
   2.  Execute EVERY query listed in 'follow_up_queries' using the 'google_search' tool.
   3.  Synthesize the new findings and COMBINE them with the existing information in 'section_research_findings'.
